@@ -1,7 +1,10 @@
 package primaryData;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -25,6 +28,7 @@ public class ReadFiles implements Runnable {
 	private List<List<String>> main;
 	private String[][] result;
 	private File processedFile;
+	private FileReader fileReader;
 
 	public ReadFiles() {
 		this.map = new HashMap();
@@ -63,11 +67,30 @@ public class ReadFiles implements Runnable {
 
 		@SuppressWarnings("resource")
 		String content = null;
-		Scanner sc = null;
 		try {
+			
+			fileReader = new FileReader(file);
+			BufferedReader bufferedReader = new BufferedReader(fileReader);
+			StringBuilder stringBuilder = new StringBuilder();
+			String line;
+			try {
+				while ((line = bufferedReader.readLine()) != null) {
+					stringBuilder.append(line);
+					stringBuilder.append("\n");
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				try {
+					fileReader.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 
-			sc = new Scanner(file);
-			content = sc.useDelimiter("\\Z").next();
+		//	sc = new Scanner(file);
+		//	content = sc.useDelimiter("\\Z").next();
+			content = stringBuilder.toString();
 			arr = content.split(" ");
 			storeString = Arrays.asList(arr);
 			main.add(storeString);
@@ -80,9 +103,7 @@ public class ReadFiles implements Runnable {
 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
-		} finally {
-			sc.close();
-		}
+		} 
 
 	}
 

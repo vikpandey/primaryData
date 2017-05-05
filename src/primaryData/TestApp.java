@@ -42,7 +42,7 @@ public class TestApp {
 	
 	public static void startThread(ReadFiles read) {
 		
-		int numOfThread = 2;
+		int numOfThread = 1000;
 	
 		Thread[] thread = new Thread[numOfThread];
 		
