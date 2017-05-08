@@ -40,15 +40,22 @@ public class TestApp {
 
 	}
 	
+	@SuppressWarnings("static-access")
 	public static void startThread(ReadFiles read) {
 		
-		int numOfThread = 1000;
+		int numOfThread = 10;
 	
 		Thread[] thread = new Thread[numOfThread];
 		
 		for(int i = 1; i < numOfThread; i++) {
 			thread[i] = new Thread(read);
 			thread[i].start();
+			try {
+				thread[i].sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
