@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 /**
  * 
@@ -29,6 +28,9 @@ public class ReadFiles implements Runnable {
 	private String[][] result;
 	private File processedFile;
 	private FileReader fileReader;
+	private Object lock1 = new Object();
+	private Object lock2 = new Object();
+	private Object lock3 = new Object();
 
 	public ReadFiles() {
 		this.map = new HashMap();
@@ -41,69 +43,77 @@ public class ReadFiles implements Runnable {
 		readListFile(processedFile);
 	}
 
-	private synchronized void readListFile(File directory) {
+	private void readListFile(File directory) {
 
-		if (!directory.isDirectory()) {
-			readFiles(directory, 1);
-		} else {
+		synchronized (lock1) {
 
-			File[] listOfFiles = directory.listFiles();
-			int numOfFiles = listOfFiles.length;
+			if (!directory.isDirectory()) {
+				readFiles(directory, 1);
+			} else {
 
-			for (int i = 0; i < listOfFiles.length; i++) {
-				if (listOfFiles[i].isFile()) {
-					readFiles(listOfFiles[i], numOfFiles);
-				} else if (listOfFiles[i].isDirectory()) {
-					System.out.println("Directory " + listOfFiles[i].getName());
+				File[] listOfFiles = directory.listFiles();
+				int numOfFiles = listOfFiles.length;
+
+				for (int i = 0; i < listOfFiles.length; i++) {
+					if (listOfFiles[i].isFile()) {
+						readFiles(listOfFiles[i], numOfFiles);
+					} else if (listOfFiles[i].isDirectory()) {
+						System.out.println("Directory " + listOfFiles[i].getName());
+					}
 				}
 			}
 		}
 	}
 
-	private synchronized void readFiles(File file, int numOfFiles) {
-		if (file == null) {
-			return;
-		}
+	private void readFiles(File file, int numOfFiles) {
 
-		@SuppressWarnings("resource")
-		String content = null;
-		try {
-			
-			fileReader = new FileReader(file);
-			BufferedReader bufferedReader = new BufferedReader(fileReader);
-			StringBuilder stringBuilder = new StringBuilder();
-			String line;
+		synchronized (lock2) {
+
+			if (file == null) {
+				return;
+			}
+
+			@SuppressWarnings("resource")
+			String content = null;
 			try {
-				while ((line = bufferedReader.readLine()) != null) {
-					stringBuilder.append(line);
-					stringBuilder.append("\n");
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			} finally {
+
+				fileReader = new FileReader(file);
+				BufferedReader bufferedReader = new BufferedReader(fileReader);
+				StringBuilder stringBuilder = new StringBuilder();
+				String line;
 				try {
-					fileReader.close();
+					while ((line = bufferedReader.readLine()) != null) {
+						stringBuilder.append(line);
+						stringBuilder.append("\n");
+					}
 				} catch (IOException e) {
 					e.printStackTrace();
+				} finally {
+					try {
+						fileReader.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
+
+				// sc = new Scanner(file);
+				// content = sc.useDelimiter("\\Z").next();
+				content = stringBuilder.toString();
+				arr = content.split(" ");
+				storeString = Arrays.asList(arr);
+				main.add(storeString);
+				++count;
+
+				if (count == numOfFiles) {
+					result = convertList(main);
+					arr = conver1D(result);
+				}
+
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
 			}
 
-		//	sc = new Scanner(file);
-		//	content = sc.useDelimiter("\\Z").next();
-			content = stringBuilder.toString();
-			arr = content.split(" ");
-			storeString = Arrays.asList(arr);
-			main.add(storeString);
-			++count;
-
-			if (count == numOfFiles) {
-				result = convertList(main);
-				arr = conver1D(result);
-			}
-
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} 
+		}
 
 	}
 
@@ -141,16 +151,22 @@ public class ReadFiles implements Runnable {
 		return array;
 	}
 
-	public synchronized Map<String, Integer> createMap() {
-		for (int i = 0; i < arr.length; i++) {
-			if (map.containsKey(arr[i])) {
-				map.put(arr[i], map.get(arr[i]) + 1);
-			} else {
-				map.put(arr[i], 1);
+	public Map<String, Integer> createMap() {
+
+		synchronized (lock3) {
+
+			for (int i = 0; i < arr.length; i++) {
+				if (map.containsKey(arr[i])) {
+					map.put(arr[i], map.get(arr[i]) + 1);
+				} else {
+					map.put(arr[i], 1);
+				}
 			}
+
+			return map;
+
 		}
 
-		return map;
 	}
 
 	public File getFile() {
@@ -181,6 +197,10 @@ public class ReadFiles implements Runnable {
 	public void run() {
 
 		readListFile(processedFile);
+		/*
+		 * try { Thread.sleep(100); } catch (InterruptedException e) {
+		 * e.printStackTrace(); }
+		 */
 		createMap();
 
 	}
